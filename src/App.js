@@ -1,23 +1,56 @@
-import logo from './logo.svg';
-import './App.css';
+import { useState, useEffect } from "react";
+import './styles/App.scss';
+import Pic from './img/default.jpg';
+
+import Weather from "./Weather";
+
+import { useImages } from "./hooks/imageApi";
 
 function App() {
+  const [location, setLocation] = useState('');
+
+  const [imageUrls, setImageUrls] = useState([]);
+  const [current, setCurrent] = useState(0);
+
+  const { getImages } = useImages();
+  const disImages = [];
+
+  useEffect( () => {
+    getImages(location)
+      .then( data => {
+        setCurrent(0);
+        setImageUrls(data);
+      })
+    //eslint-disable-next-line
+  }, [location])
+
+  useEffect( () => {
+    const updateImage = setInterval( () => {
+      if (current === disImages.length - 1 ) {
+        setCurrent(0);
+      } else {
+        setCurrent(current => current + 1);
+      }
+    }, 5000);
+    return () => {clearInterval(updateImage)};
+  }, [current, disImages.length]);
+
+  for (let i = 0; i < imageUrls.length; i++) {
+    const image = new Image();
+    image.src = imageUrls[i];
+    disImages.push(image);
+  };
+
+  const background = disImages.length > 0 ? disImages[current].src : null;
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <div 
+        className="filter"
+        style={{backgroundImage: `url(${background ? background : Pic})`}}/>
+        <Weather 
+          setLocation={setLocation}
+        />
     </div>
   );
 }
