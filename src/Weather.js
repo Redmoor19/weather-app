@@ -1,28 +1,26 @@
-import { Paper, TextField, InputAdornment, createTheme, ThemeProvider, Typography, Box, Grid } from '@mui/material';
+import { Paper, TextField, InputAdornment, Switch, Box } from '@mui/material';
+import { RingLoader } from 'react-spinners'
 import { useState } from 'react';
 import Location from './img/location.png';
-import Wind from "./img/wind.png";
-import Hymidity from './img/hymidity.png';
-import Pressure from './img/pressure.png';
-import Cloud from './img/cloud.png';
 
 import { useWeather } from './hooks/weatherApi';
-
-const theme = createTheme({
-    palette: {
-        primary: {
-            main: "#000"
-        }
-    }
-})
+import Current from './Current';
+import Forecast from './Forecast';
 
 const Weather = ({setLocation}) => {
     const [search, setSearch] = useState('');
     const [forecast, setForecast] = useState();
-    const [isCelsius, setIsCelsius] = useState(true);
+    const [tab, setTab] = useState('1');
 
+    const changeTab = () => {
+        if (tab === '1') {
+            setTab('2')
+        } else {
+            setTab('1')
+        }
+    };
 
-    const {error, clearError, loading, getForecast} = useWeather();
+    const {clearError, loading, getForecast} = useWeather();
 
     const handleKeyDown = (event) => {
         if (event.key === 'Enter') {
@@ -36,56 +34,8 @@ const Weather = ({setLocation}) => {
         }
     };
 
-    const upgradeUrl = (url) => {
-        const regex = /\/\/cdn\.weatherapi\.com\/weather\/64x64\//g;
-        return url.replace(regex, "//cdn.weatherapi.com/weather/128x128/");
-    };
-    console.log(forecast);
-
-    const weather = forecast ? 
-    <Box>
-        <Typography 
-            variant='h4'
-            sx={{mt: 3}}
-        >{`${forecast.location.name}, ${forecast.location.country}`}</Typography>
-        <img src={upgradeUrl(forecast.current.condition.icon)} alt="" className="weather_icon" />
-        <Typography 
-            variant='h4'
-            onClick={() => setIsCelsius(isCelsius => !isCelsius)}
-            style={{cursor: 'pointer'}}
-        >
-        {isCelsius ? `${forecast.current.temp_c}°C` : `${forecast.current.temp_f}°F`}</Typography>
-        <Typography variant='h5'>{forecast.current.condition.text}</Typography>
-        <Grid 
-            container
-            direction="row"
-            justifyContent="space-around"
-            alignItems="center"
-            sx={{
-                mt: 5
-            }}>
-            <Box>
-                <img className='small_icon' src={Wind} alt='wind'/>
-                <Typography variant='h6'>{`${forecast.current.wind_kph}kph`}</Typography>
-            </Box>
-            <Box>
-                <img className='small_icon' src={Hymidity} alt='hymidity'/>
-                <Typography variant='h6'>{`${forecast.current.humidity}`}</Typography>
-            </Box>
-            <Box>
-                <img className='small_icon' src={Cloud} alt='cloud'/>
-                <Typography variant='h6'>{`${forecast.current.cloud}%`}</Typography>
-            </Box>
-            <Box>
-                <img className='small_icon' src={Pressure} alt='pressure'/>
-                <Typography variant='h6'>{`${forecast.current.pressure_mb}mbar`}</Typography>
-            </Box>
-        </Grid>
-    </Box> : null;
-    
     return(
-        <ThemeProvider theme={theme}>
-            <Paper
+        <Paper
                 sx={{
                     width: 600,
                     maxHeight: 'auto',
@@ -95,6 +45,11 @@ const Weather = ({setLocation}) => {
                     borderRadius: 5,
                     textAlign: 'center'
                 }}>
+                { forecast && 
+                <Box sx={{display: 'block', mb: 2}}>
+                    <Switch onClick={changeTab}/>
+                </Box>
+                }
                 <TextField
                     label='City'
                     autoFocus={true}
@@ -112,9 +67,15 @@ const Weather = ({setLocation}) => {
                         )
                     }}
                 />
-                {weather}
+                {loading && 
+                <Box sx={{margin: '0 auto', width: 40, mt: 5}}>
+                    <RingLoader color="#798AA3"/>
+                </Box>}
+                {(forecast && !loading) && 
+                (tab === '1') ? <Current forecast={forecast}/> : null ||
+                (tab === '2') ? <Forecast forecast={forecast}/> : null
+                }
             </Paper>
-        </ThemeProvider>
     )
 }
 
